@@ -3,12 +3,12 @@ import { groupBy } from "lodash-es";
 export default async function handler(req, res) {
   const params = new URLSearchParams();
   params.set("article_slug", req.query.slug);
-  const response = await fetch(
-    `https://www.linda.nl/api/v1/pages/article/?article_type=post&${params}`
-  );
+  // Using the URLSearchParams to render and escape the slug as the url search param "article_slug".
+  const url = `https://www.linda.nl/api/v1/pages/article/?article_type=post&${params}`;
+  const response = await fetch(url);
   const json = await response.json();
 
-  // This mapping logic is for example purposes, in real-world code I'd place additional
+  // This mapping logic is for example purposes, in real-world code I'd place additional validation
   const included = groupBy(json.included, "type");
   const articleId = json.data[0].relationships.article.data.id;
   const article = included.articles.find((entry) => entry.id === articleId);
@@ -16,8 +16,10 @@ export default async function handler(req, res) {
   const image = included.images.find((entry) => entry.id === imageId);
   const imageSizes = groupBy(image.attributes.sizes, "type");
 
-  // This is a oversimplified response, it needs
   res.status(200).json({
+    // This is a oversimplified response, it needs more data (og tags / ads, tracking ids) etc
+    NOTE_TO_DEVS:
+      "This is over simplification, but yes the response can contain drasticly less and use simpler data structures.",
     id: article.id,
     title: article.attributes.title,
     categories: article.attributes.categories.map((entry) => ({
